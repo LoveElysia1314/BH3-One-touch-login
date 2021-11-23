@@ -1,1 +1,3 @@
-# Scanner Helper
+# Scanner Helper / 扫码器助手
+用于识别剪贴板中的二维码并通过udp组播发送给同一网络下的扫码器客户端  
+bilibili服可本地处理所有登录信息（需在配置文件启用）  
