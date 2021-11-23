@@ -56,7 +56,7 @@ def write_conf(old=None):
         
 async def main():
     conf_loop = True
-    while conf_loop
+    while conf_loop:
         if os.path.isfile('./config.json') == False:
             write_conf()
         with open('./config.json') as fp:
