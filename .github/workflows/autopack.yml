@@ -1,0 +1,26 @@
+name: Auto Package Helper
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@master
+
+      - name: Install Python lib
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Package to exe
+        run: pyinstaller --clean -F main.py --collect-all pyzbar
+
+      - name: Upload output
+        uses: actions/upload-artifact@v2
+        with:
+          name: helper
+          path: dist/main.exe
