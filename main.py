@@ -15,9 +15,10 @@ mcast_group_ip = '239.0.1.255'
 mcast_group_port = 12585
 bhinfo = {}
 cfg = {}
-async def parse_pic():
+async def parse_pic(cfg,bhinfo=None):
     im = ImageGrab.grabclipboard()
     print('getting img...')
+    # print(cfg)
     if isinstance(im, Image.Image):
         print('found image.')
         result = decode(im)
@@ -33,25 +34,28 @@ async def parse_pic():
             print(ticket)
             if cfg['no_login']:
                 send(url)
-            await scanCheck(bhinfo,ticket)
+            await mihoyosdk.scanCheck(bhinfo,ticket)
             time.sleep(1)
             clear_clipboard()
 
 async def main():
-    if os.path.isfile(fname) != true:
+    if os.path.isfile('./config.json') == False:
         cfgr = '{"account":"","password":"","no_login":true}'
         with open('./config.json', 'w') as f:
             output = json.dumps(json.loads(cfgr), sort_keys=True, indent=4, separators=(',', ': '))
             f.write(output)
     with open('./config.json') as fp:
         cfg = json.loads(fp.read())
-    if cfg['no_login'] == false:
+    if cfg['no_login'] == False:
         bsinfo = await bsgamesdk.login(cfg['account'], cfg['password'])
         print(bsinfo['uid'])
         print(bsinfo['access_key'])
         bhinfo = await mihoyosdk.verify(bsinfo['uid'], bsinfo['access_key'])
     while True:
-        await parse_pic()
+        if cfg['no_login']:
+            await parse_pic(cfg)
+        else:
+            await parse_pic(cfg,bhinfo)
         time.sleep(1)
 def clear_clipboard():
     from ctypes import windll
