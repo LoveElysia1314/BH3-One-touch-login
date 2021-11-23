@@ -43,7 +43,7 @@ async def parse_pic(cfg,bhinfo=None):
         else:
             print('no url... skip')
 def write_conf(old=None):
-    cfge = json.loads('{"account":"","password":"","sleep_time":3}')
+    cfge = json.loads('{"account":"","password":"","sleep_time":3,"ver":2}')
     if old != None:
        for key in cfge:
            try:
