@@ -24,10 +24,10 @@ async def sendPost(url,data):
     return res.json()
     
 def bh3Sign(data):
-    print("data:"+data)
+    # print("data:"+data)
     key = '0ebc517adb1b62c6b408df153331f9aa'
     sign = hmac.new(key.encode(), data.encode(), hashlib.sha256).hexdigest()
-    print("sign:"+sign)
+    # print("sign:"+sign)
     return sign
 
 def setsign(data):
@@ -49,13 +49,13 @@ async def getOAServer():
     oaMainUrl = 'https://global2.bh3.com/query_dispatch?'
     param = f'version={bh_ver}_gf_android_bilibili&t={timestamp}'
     feedback = await sendPost(oaMainUrl+param,'')
-    print(feedback)
+    # print(feedback)
     timestamp = int(time.time())
     param = f'?version={bh_ver}_gf_android_bilibili&t={timestamp}'
     dispatchUrl = feedback['region_list'][0]['dispatch_url']+param
-    print(dispatchUrl)
+    # print(dispatchUrl)
     dispatch = await sendPost(dispatchUrl+param,'')
-    print(dispatch)
+    # print(dispatch)
     return dispatch
 
 async def scanCheck(bhinfo,ticket):
@@ -66,13 +66,15 @@ async def scanCheck(bhinfo,ticket):
     postBody = json.dumps(check).replace(' ','')
     feedback = await sendPost('https://api-sdk.mihoyo.com/bh3_cn/combo/panda/qrcode/scan', postBody)
     if feedback['retcode'] != 0:
-        print('二维码已过期')
+        print('请求错误！可能是二维码已过期')
+        print(feedback)
         return
-    await scanConfirm(bhinfo,ticket)
+    else:
+        await scanConfirm(bhinfo,ticket)
     
 async def scanConfirm(bhinfoR,ticket):
     bhinfo = bhinfoR['data']
-    print(bhinfo)
+    #print(bhinfo)
     scanResult = json.loads(scanResultR)
     scanData = json.loads(scanDataR)
     scanData['dispatch'] = await getOAServer()
@@ -92,12 +94,17 @@ async def scanConfirm(bhinfoR,ticket):
     scanResult['ticket'] = ticket
     scanResult = setsign(scanResult)
     postBody = json.dumps(scanResult).replace(' ','')
-    print(postBody)
+    # print(postBody)
     feedback = await sendPost('https://api-sdk.mihoyo.com/bh3_cn/combo/panda/qrcode/confirm', postBody)
-    print(feedback)
+    if feedback['retcode'] == 0:
+        print('scan succeed')
+    else:
+        print('scan failed.')
+        print(feedback)
+    
     
 async def verify(uid,access_key):
-    print(f'verfiy with uid={uid}, access_key = {access_key}')
+    print(f'verfiy with uid={uid}')
     data = json.loads(verifyData)
     data['uid'] = uid
     data['access_key'] = access_key

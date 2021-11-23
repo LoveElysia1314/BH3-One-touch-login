@@ -17,7 +17,7 @@ bhinfo = {}
 cfg = {}
 async def parse_pic(cfg,bhinfo=None):
     im = ImageGrab.grabclipboard()
-    print('getting img...')
+    # print('getting img...')
     # print(cfg)
     if isinstance(im, Image.Image):
         print('found image.')
@@ -31,32 +31,65 @@ async def parse_pic(cfg,bhinfo=None):
                 if element.split('=')[0] == 'ticket':
                     ticket = element.split('=')[1]
                     break
-            print(ticket)
-            if cfg['no_login']:
+            # print(ticket)
+            if bhinfo == None:
+                print('boardcast mode')
                 send(url)
-            await mihoyosdk.scanCheck(bhinfo,ticket)
+            else:
+                print('local login mode')
+                await mihoyosdk.scanCheck(bhinfo,ticket)
             time.sleep(1)
             clear_clipboard()
-
+        else:
+            print('no url... skip')
+def write_conf(old=None):
+    cfge = json.loads('{"account":"","password":"","sleep_time":3}')
+    if old != None:
+       for key in cfge:
+           try:
+               cfge[key] = old[key]
+           except KeyError:
+               continue 
+    with open('./config.json', 'w') as f:
+        output = json.dumps(cfge, sort_keys=True, indent=4, separators=(',', ': '))
+        f.write(output)
+        
 async def main():
-    if os.path.isfile('./config.json') == False:
-        cfgr = '{"account":"","password":"","no_login":true}'
-        with open('./config.json', 'w') as f:
-            output = json.dumps(json.loads(cfgr), sort_keys=True, indent=4, separators=(',', ': '))
-            f.write(output)
-    with open('./config.json') as fp:
-        cfg = json.loads(fp.read())
-    if cfg['no_login'] == False:
+    conf_loop = True
+    while conf_loop
+        if os.path.isfile('./config.json') == False:
+            write_conf()
+        with open('./config.json') as fp:
+            cfg = json.loads(fp.read())
+            try:
+                if cfg['ver'] != 2:
+                    print('配置文件已更新，请注意重新修改文件')
+                    write_conf(cfg)
+                    continue
+            except KeyError:
+                print('配置文件已更新，请注意重新修改文件')
+                write_conf(cfg)
+                continue
+        conf_loop = False
+    if cfg['account'] != '':
+        print('found account, try to login')
         bsinfo = await bsgamesdk.login(cfg['account'], cfg['password'])
         print(bsinfo['uid'])
         print(bsinfo['access_key'])
         bhinfo = await mihoyosdk.verify(bsinfo['uid'], bsinfo['access_key'])
-    while True:
-        if cfg['no_login']:
-            await parse_pic(cfg)
-        else:
+        if bhinfo['retcode'] != 0:
+            print('login failed.')
+            print(bhinfo)
+            return
+        print('getting img...')
+        while True:
             await parse_pic(cfg,bhinfo)
-        time.sleep(1)
+            time.sleep(cfg['sleep_time'])
+    else:
+        print('getting img...')
+        while True:
+            await parse_pic(cfg)
+            time.sleep(cfg['sleep_time'])
 def clear_clipboard():
     from ctypes import windll
     if windll.user32.OpenClipboard(None):  # 打开剪切板

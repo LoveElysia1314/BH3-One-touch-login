@@ -16,7 +16,7 @@ async def sendpost(url,data):
         "Host": "line1-sdk-center-login-sh.biligame.net"
     }
     res = post(url=url,data=data,headers=header)
-    print(res)
+    #print(res)
     return res.json()
 
 def setsign(data):
@@ -76,7 +76,7 @@ async def captch():
     return await sendpost(bililogin+"api/client/start_captcha",data)
 
 async def login(bili_account,bili_pwd):
-    print(f'logging in with acc={bili_account}, pwd = {bili_pwd}')
+    print(f'logging in with acc={bili_account}')
     login_sta= await login1(bili_account,bili_pwd)
     if "access_key" not in login_sta:
         print('登录失败，可能需要验证码，请联系开发者补充代码')
