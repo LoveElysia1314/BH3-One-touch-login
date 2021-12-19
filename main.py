@@ -1,28 +1,128 @@
-import psutil
-import sys
-import socket
-import time
-import os.path
-import bsgamesdk
-import mihoyosdk
 import asyncio
 import json
-from pyzbar.pyzbar import decode
+import os.path
+import socket
+import sys
+import time
+
+import psutil
 from PIL import Image, ImageGrab
+from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtWidgets import QApplication, QMainWindow
+from pyzbar.pyzbar import decode
+
+import bsgamesdk
+import mainWindow
+import mihoyosdk
+import LoginDialog
 
 # 组播组IP和端口
-mcast_group_ip = '239.0.1.255'
-mcast_group_port = 12585
-bhinfo = {}
-cfg = {}
-async def parse_pic(cfg,bhinfo=None):
+m_cast_group_ip = '239.0.1.255'
+m_cast_group_port = 12585
+bh_info = {}
+config = {}
+data = {}
+
+
+def init_conf():
+    # 配置文件检查
+    global config
+    conf_loop = True
+    while conf_loop:
+        if not os.path.isfile('./config.json'):
+            write_conf()
+        with open('./config.json') as fp:
+            config = json.loads(fp.read())
+            try:
+                if config['ver'] != 2:
+                    print('配置文件已更新，请注意重新修改文件')
+                    write_conf(config)
+                    continue
+            except KeyError:
+                print('配置文件已更新，请注意重新修改文件')
+                write_conf(config)
+                continue
+        conf_loop = False
+    print("配置文件检查完成")
+    config['account_login'] = False
+
+
+def write_conf(old=None):
+    config_temp = json.loads('{"account":"","password":"","sleep_time":3,"ver":3,"clip_check":false,'
+                             '"socket_send":false}')
+    if old is not None:
+        for key in config_temp:
+            try:
+                config_temp[key] = old[key]
+            except KeyError:
+                continue
+    with open('./config.json', 'w') as f:
+        output = json.dumps(config_temp, sort_keys=True, indent=4, separators=(',', ': '))
+        f.write(output)
+
+
+class LoginThread(QThread):
+    update_log = pyqtSignal(str)
+
+    def run(self):
+        asyncio.run(self.login())
+
+    async def login(self):
+        global config, bh_info
+        ui.loginBiliBtn.setText('登陆中...')
+        self.printLog('登录B站账号中...')
+        bs_info = await bsgamesdk.login(config['account'], config['password'])
+        if "access_key" not in bs_info:
+            self.printLog('登录失败！')
+            self.printLog(bs_info)
+            ui.loginBiliBtn.setText("登陆账号")
+            ui.loginBiliBtn.setDisabled(False)
+            return
+        self.printLog('登录成功！')
+        self.printLog('登录崩坏3账号中...')
+        bh_info = await mihoyosdk.verify(bs_info['uid'], bs_info['access_key'])
+        if bh_info['retcode'] != 0:
+            self.printLog('登录失败！')
+            self.printLog(bh_info)
+            return
+        self.printLog('登录成功！')
+        ui.loginBiliBtn.setText("账号已登录")
+        ui.loginBiliBtn.setDisabled(True)
+        config['account_login'] = True
+
+        write_conf(config)
+
+    def printLog(self, msg):
+        print(str(msg))
+        self.update_log.emit(str(msg))
+
+
+class ParseThread(QThread):
+    update_log = pyqtSignal(str)
+
+    def run(self):
+        asyncio.run(self.check())
+
+    async def check(self):
+        while True:
+            if config['clip_check']:
+                await parse_pic(self.printLog)
+            time.sleep(config['sleep_time'])
+
+    def printLog(self, msg):
+        print(str(msg))
+        self.update_log.emit(str(msg))
+
+
+async def parse_pic(printLog):
+    global bh_info
     im = ImageGrab.grabclipboard()
     # print('getting img...')
-    # print(cfg)
+    # print(config)
     if isinstance(im, Image.Image):
-        print('found image.')
+        printLog('识别到图片,开始检测是否为崩坏3登陆码')
         result = decode(im)
-        if (len(result) >= 1):
+        if len(result) >= 1:
             url = result[0].data.decode('utf-8')
             param = url.split('?')[1]
             params = param.split('&')
@@ -32,88 +132,141 @@ async def parse_pic(cfg,bhinfo=None):
                     ticket = element.split('=')[1]
                     break
             # print(ticket)
-            if bhinfo == None:
-                print('boardcast mode')
-                send(url)
+            if config['account_login']:
+                printLog('二维码识别成功，开始请求崩坏3服务器完成扫码')
+                await mihoyosdk.scanCheck(printLog,bh_info, ticket)
             else:
-                print('local login mode')
-                await mihoyosdk.scanCheck(bhinfo,ticket)
+                if config['socket_send']:
+                    printLog('开始发送广播')
+                    send(printLog, url)
+                # printLog('local login mode')
+
             time.sleep(1)
             clear_clipboard()
         else:
-            print('no url... skip')
-def write_conf(old=None):
-    cfge = json.loads('{"account":"","password":"","sleep_time":3,"ver":2}')
-    if old != None:
-       for key in cfge:
-           try:
-               cfge[key] = old[key]
-           except KeyError:
-               continue 
-    with open('./config.json', 'w') as f:
-        output = json.dumps(cfge, sort_keys=True, indent=4, separators=(',', ': '))
-        f.write(output)
-        
-async def main():
-    conf_loop = True
-    while conf_loop:
-        if os.path.isfile('./config.json') == False:
-            write_conf()
-        with open('./config.json') as fp:
-            cfg = json.loads(fp.read())
-            try:
-                if cfg['ver'] != 2:
-                    print('配置文件已更新，请注意重新修改文件')
-                    write_conf(cfg)
-                    continue
-            except KeyError:
-                print('配置文件已更新，请注意重新修改文件')
-                write_conf(cfg)
-                continue
-        conf_loop = False
-    if cfg['account'] != '':
-        print('found account, try to login')
-        bsinfo = await bsgamesdk.login(cfg['account'], cfg['password'])
-        print(bsinfo['uid'])
-        print(bsinfo['access_key'])
-        bhinfo = await mihoyosdk.verify(bsinfo['uid'], bsinfo['access_key'])
-        if bhinfo['retcode'] != 0:
-            print('login failed.')
-            print(bhinfo)
-            return
-        print('getting img...')
-        while True:
-            await parse_pic(cfg,bhinfo)
-            time.sleep(cfg['sleep_time'])
-    else:
-        print('getting img...')
-        while True:
-            await parse_pic(cfg)
-            time.sleep(cfg['sleep_time'])
+            printLog('非登陆码,跳过')
+
+
 def clear_clipboard():
     from ctypes import windll
     if windll.user32.OpenClipboard(None):  # 打开剪切板
         windll.user32.EmptyClipboard()  # 清空剪切板
         windll.user32.CloseClipboard()  # 关闭剪切板
-def send(url):
+
+
+def send(printLog, url):
     info = psutil.net_if_addrs()
-    for k,v in info.items():
+    for k, v in info.items():
         for item in v:
-            if item[0] == 2 and not item[1]=='127.0.0.1':
-                print('send msg on'+k)
+            if item[0] == 2 and not item[1] == '127.0.0.1':
+                printLog('开始在网卡 ' + k + ' 发送广播')
                 send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
                 try:
                     local_ip = socket.gethostbyname(item[1])
-                    send_sock.bind((local_ip, mcast_group_port))
-                    message = "{\"scanner_data\":{\"url\":\"%s\",\"t\":%d}}" % (url,int(time.time()))
-                    print(message)
-                    send_sock.sendto(message.encode(), (mcast_group_ip, mcast_group_port))
-                    print(f'{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}: message send finish')
+                    send_sock.bind((local_ip, m_cast_group_port))
+                    message = "{\"scanner_data\":{\"url\":\"%s\",\"t\":%d}}" % (url, int(time.time()))
+                    send_sock.sendto(message.encode(), (m_cast_group_ip, m_cast_group_port))
+                    printLog('在网卡 ' + k + ' 发送广播成功')
                 except OSError:
-                    print('send msg on '+k+' failed.')
+                    printLog('在网卡 ' + k + ' 发送广播失败')
+
+
+def login_accept():
+    ui.backendLogin = LoginThread()
+    ui.backendLogin.update_log.connect(window.printLog)
+    ui.backendLogin.start()
+
+
+def deal_password(string):
+    global config
+    config['password'] = string
+
+
+def deal_account(string):
+    global config
+    config['account'] = string
+
+
+class SelfMainWindow(QMainWindow):
+    def __init__(self, parent=None):
+        super(SelfMainWindow, self).__init__(parent)
+
+    @staticmethod
+    def printLog(msg):
+        ui.logText.append(msg)
+
+    @staticmethod
+    def login():
+        global config
+        if config['account_login']:
+            ui.logText.append("账号已登录")
+            ui.loginBiliBtn.setText("账号已登录")
+            ui.loginBiliBtn.setDisabled(True)
+        ui.logText.append("开始登陆账号")
+        # self.loginBiliBtn.setText("test")
+        # asyncio.run(main())
+        ui.loginBiliBtn.setText("登陆中")
+        ui.loginBiliBtn.setDisabled(True)
+
+        dialog = LoginDialog(window)
+        dialog.account.textChanged.connect(deal_account)
+        dialog.password.textChanged.connect(deal_password)
+        dialog.show()
+        dialog.accepted.connect(login_accept)
+
+    # ui.autoLoginCheck.clicked.connect()
+
+    # asyncio.run(main())
+
+    @staticmethod
+    def qrCodeSwitch(boolean):
+        if boolean:
+            ui.clipCheck.setText("当前状态:启用")
+        else:
+            ui.clipCheck.setText("当前状态:关闭")
+        config['clip_check'] = boolean
+        write_conf(config)
+
+    @staticmethod
+    def broadcastSwitch(boolean):
+        if boolean:
+            ui.broadcastCheck.setText("当前状态:启用")
+        else:
+            ui.broadcastCheck.setText("当前状态:关闭")
+        config['socket_send'] = boolean
+        write_conf(config)
+
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    init_conf()
+    app = QApplication(sys.argv)
+    window = SelfMainWindow()
+    ui = mainWindow.Ui_MainWindow()
+    ui.setupUi(window)
+    try:
+        if config['account'] != '':
+            ui.logText.append("配置文件已有账号，尝试登录中...")
+            ui.backendLogin = LoginThread()
+            ui.backendLogin.update_log.connect(window.printLog)
+            ui.backendLogin.start()
+        if config['clip_check']:
+            ui.clipCheck.setText("当前状态:启用")
+        else:
+            ui.clipCheck.setText("当前状态:关闭")
+        ui.clipCheck.setChecked(config['clip_check'])
+        if config['socket_send']:
+            ui.broadcastCheck.setText("当前状态:启用")
+        else:
+            ui.broadcastCheck.setText("当前状态:关闭")
+        ui.broadcastCheck.setChecked(config['socket_send'])
+    except KeyError:
+        write_conf(config)
+        print("配置文件异常，重置并跳过登录")
+    ui.backendClipCheck = ParseThread()
+    ui.backendClipCheck.update_log.connect(window.printLog)
+    ui.backendClipCheck.start()
+    window.show()
 
+    sys.exit(app.exec_())
 
-## package cmd --> pyinstaller --clean -F main.py --collect-all pyzbar
+# package cmd --> pyinstaller --clean -F main.py --collect-all pyzbar
