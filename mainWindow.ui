@@ -7,9 +7,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>723</width>
+    <width>760</width>
     <height>280</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>760</width>
+    <height>280</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>760</width>
+    <height>280</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>崩坏3外置扫码器</string>
@@ -19,8 +31,8 @@
     <property name="geometry">
      <rect>
       <x>430</x>
-      <y>-1</y>
-      <width>291</width>
+      <y>0</y>
+      <width>322</width>
       <height>271</height>
      </rect>
     </property>
@@ -94,7 +106,7 @@ p, li { white-space: pre-wrap; }
     <property name="geometry">
      <rect>
       <x>590</x>
-      <y>260</y>
+      <y>250</y>
       <width>150</width>
       <height>20</height>
      </rect>
@@ -103,13 +115,34 @@ p, li { white-space: pre-wrap; }
      <string>Powered By Hao_cen</string>
     </property>
    </widget>
+   <widget class="QLabel" name="label_5">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>70</y>
+      <width>269</width>
+      <height>194</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>
+简易使用说明：
+第一次使用需要点击登录按钮登录B站账号
+后续会将账号密码储存在配置文件内自动登录
+请注意保护好文件安全
+
+然后将监听二维码勾选上
+这时候在剪贴板中的二维码图片将会自动识别
+可以使用键盘上的PrintScreen按键快速截图</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>723</width>
+     <width>760</width>
      <height>23</height>
     </rect>
    </property>
