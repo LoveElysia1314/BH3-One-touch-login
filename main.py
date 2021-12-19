@@ -1,5 +1,6 @@
 import asyncio
 import json
+from json.decoder import JSONDecodeError
 import os.path
 import socket
 import sys
@@ -31,17 +32,22 @@ def init_conf():
     while conf_loop:
         if not os.path.isfile('./config.json'):
             write_conf()
-        with open('./config.json') as fp:
-            config = json.loads(fp.read())
-            try:
-                if config['ver'] != 3:
+        try:
+            with open('./config.json') as fp:
+                config = json.loads(fp.read())
+                try:
+                    if config['ver'] != 3:
+                        print('配置文件已更新，请注意重新修改文件')
+                        write_conf(config)
+                        continue
+                except KeyError:
                     print('配置文件已更新，请注意重新修改文件')
                     write_conf(config)
                     continue
-            except KeyError:
-                print('配置文件已更新，请注意重新修改文件')
-                write_conf(config)
-                continue
+        except JSONDecodeError:
+            print('配置文件格式不正确 重新写入中...')
+            write_conf()
+            continue
         conf_loop = False
     print("配置文件检查完成")
     config['account_login'] = False
@@ -270,4 +276,4 @@ if __name__ == '__main__':
 
     sys.exit(app.exec_())
 
-# package cmd --> pyinstaller --clean -Fw main.py bsgamesdk.py loginDialog.py mainWindow.py mihoyosdk.py rsacr.py --collect-all pyzbar
+# package cmd --> pyinstaller --clean -Fw main.py --collect-all pyzbar
