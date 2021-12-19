@@ -17,7 +17,7 @@ jobs:
           pip install pyinstaller
 
       - name: Package to exe
-        run: pyinstaller --clean -Fw bsgamesdk.py LoginDialog.py main.py mainWindow.py mihoyosdk.py rsacr.py --collect-all pyzbar
+        run: pyinstaller --clean -Fw main.py bsgamesdk.py LoginDialog.py mainWindow.py mihoyosdk.py rsacr.py --collect-all pyzbar
 
       - name: Upload output
         uses: actions/upload-artifact@v2
