@@ -13,8 +13,8 @@ from pyzbar.pyzbar import decode
 
 import bsgamesdk
 import mainWindow
+import loginDialog
 import mihoyosdk
-import LoginDialog
 
 # 组播组IP和端口
 m_cast_group_ip = '239.0.1.255'
@@ -56,6 +56,7 @@ def write_conf(old=None):
                 config_temp[key] = old[key]
             except KeyError:
                 continue
+    config_temp['ver'] = 3
     with open('./config.json', 'w') as f:
         output = json.dumps(config_temp, sort_keys=True, indent=4, separators=(',', ': '))
         f.write(output)
@@ -208,7 +209,7 @@ class SelfMainWindow(QMainWindow):
         ui.loginBiliBtn.setText("登陆中")
         ui.loginBiliBtn.setDisabled(True)
 
-        dialog = LoginDialog(window)
+        dialog = loginDialog.LoginDialog(window)
         dialog.account.textChanged.connect(deal_account)
         dialog.password.textChanged.connect(deal_password)
         dialog.show()
@@ -269,4 +270,4 @@ if __name__ == '__main__':
 
     sys.exit(app.exec_())
 
-# package cmd --> pyinstaller --clean -Fw bsgamesdk.py LoginDialog.py main.py mainWindow.py mihoyosdk.py rsacr.py --collect-all pyzbar
+# package cmd --> pyinstaller --clean -Fw main.py bsgamesdk.py loginDialog.py mainWindow.py mihoyosdk.py rsacr.py --collect-all pyzbar
