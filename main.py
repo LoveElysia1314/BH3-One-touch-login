@@ -34,7 +34,7 @@ def init_conf():
         with open('./config.json') as fp:
             config = json.loads(fp.read())
             try:
-                if config['ver'] != 2:
+                if config['ver'] != 3:
                     print('配置文件已更新，请注意重新修改文件')
                     write_conf(config)
                     continue
