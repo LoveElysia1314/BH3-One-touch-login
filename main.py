@@ -269,4 +269,4 @@ if __name__ == '__main__':
 
     sys.exit(app.exec_())
 
-# package cmd --> pyinstaller --clean -F main.py --collect-all pyzbar
+# package cmd --> pyinstaller --clean -Fw bsgamesdk.py LoginDialog.py main.py mainWindow.py mihoyosdk.py rsacr.py --collect-all pyzbar
