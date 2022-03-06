@@ -276,4 +276,4 @@ if __name__ == '__main__':
 
     sys.exit(app.exec_())
 
-# package cmd --> pyinstaller --clean -Fw main.py --collect-all pyzbar
+# package cmd --> pyinstaller --clean -Fw main.py --collect-all pyzbar ### 请用32位环境打包 ###
