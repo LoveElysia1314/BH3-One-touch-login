@@ -1,26 +1,36 @@
+from glob import glob
 import hashlib
 import hmac
 import json
 import time
+from typing import NoReturn
 
-from requests import post
+from requests import post, get
 
 url = 'https://api-sdk.mihoyo.com/bh3_cn/combo/granter/login/v2/login'
 verifyBody = '{"device":"0000000000000000","app_id":"1","channel_id":"14","data":{},"sign":""}'
 verifyData = '{"uid":1,"access_key":"590"}'
 scanResultR = '{"device":"0000000000000000","app_id":1,"ts":1637593776681,"ticket":"","payload":{},"sign":""}'
 scanPayloadR = '{"raw":"","proto":"Combo","ext":""}'
-scanRawR = '{"heartbeat":false,"open_id":"","device_id":"0000000000000000","app_id":"1","channel_id":"14","combo_token":"","asterisk_name":"崩坏3外置扫码器用户","combo_id":"","account_type":"2"}'
+scanRawR = '{"heartbeat":false,"open_id":"","device_id":"0000000000000000","app_id":"1","channel_id":"14","combo_token":"","asterisk_name":"崩坏3桌面扫码器用户","combo_id":"","account_type":"2"}'
 scanExtR = '{"data":{}}'
 scanDataR = '{"accountType":"2","accountID":"","accountToken":"","dispatch":{}}'
 scanCheckR = '{"app_id":"1","device":"0000000000000000","ticket":"abab","ts":1637593776066,"sign":"abab"}'
+    
+local_dispatch = json.loads('{}')
+local_bh_ver = '5.8.0'
+has_dispatch = False
+has_bh_ver = False
 
-
-async def sendPost(target, data):
+async def sendPost(target, data, noReturn = False):
     res = post(url=target, data=data)
-    # print(res)
+    if noReturn:
+        return
     return res.json()
 
+async def sendGet(target):
+    res = get(url=target)
+    return res.json()
 
 def bh3Sign(data):
     # print("data:"+data)
@@ -45,12 +55,23 @@ def makeSign(data):
 
 
 async def getBHVer():
-    feedback = json.loads(await sendPost('https://service-beurmroh-1256541670.sh.apigw.tencentcs.com/version', ''))
+    global has_bh_ver,local_bh_ver
+
+    if has_bh_ver:
+        return local_bh_ver
+    feedback = await sendGet('https://api.scanner.hellocraft.xyz/update')
     # printLog('云端版本号')
-    return feedback['bh_ver']
+    local_bh_ver = feedback['bh_ver']
+    has_bh_ver = True
+    return local_bh_ver
 
 
-async def getOAServer():
+async def getOAServer():   
+    global has_dispatch,local_dispatch
+
+    if has_dispatch:
+        return local_dispatch
+
     bh_ver = await getBHVer()
     timestamp = int(time.time())
     oa_main_url = 'https://global2.bh3.com/query_dispatch?'
@@ -62,6 +83,10 @@ async def getOAServer():
     dispatch_url = feedback['region_list'][0]['dispatch_url'] + param
     # print(dispatch_url)
     dispatch = await sendPost(dispatch_url + param, '')
+
+    has_dispatch = True
+
+    local_dispatch = dispatch
     # print(dispatch)
     return dispatch
 

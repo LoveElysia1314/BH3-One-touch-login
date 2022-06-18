@@ -77,7 +77,7 @@ class LoginThread(QThread):
     async def login(self):
         global config, bh_info
         ui.loginBiliBtn.setText('登陆中...')
-        self.printLog('登录B站账号中...')
+        self.printLog(f'登录B站账号{config["account"]}中...')
         bs_info = await bsgamesdk.login(config['account'], config['password'])
         if "access_key" not in bs_info:
             self.printLog('登录失败！')
@@ -93,8 +93,24 @@ class LoginThread(QThread):
             self.printLog(bh_info)
             return
         self.printLog('登录成功！')
+        
+        self.printLog('获取OA服务器信息中...')
+
+
+        bh_ver = await mihoyosdk.getBHVer()
+
+
+        self.printLog(f'当前崩坏3版本: {bh_ver}')
+
+        oa = await mihoyosdk.getOAServer()
+        if oa['retcode'] != 0:
+            self.printLog('登录失败！')
+            self.printLog(oa)
+            return
+
+        self.printLog('获取OA服务器成功！')
         ui.loginBiliBtn.setText("账号已登录")
-        ui.loginBiliBtn.setDisabled(True)
+        # ui.loginBiliBtn.setDisabled(True)
         config['account_login'] = True
 
         write_conf(config)
@@ -123,35 +139,40 @@ class ParseThread(QThread):
 
 async def parse_pic(printLog):
     global bh_info
-    im = ImageGrab.grabclipboard()
-    # print('getting img...')
-    # print(config)
-    if isinstance(im, Image.Image):
-        printLog('识别到图片,开始检测是否为崩坏3登陆码')
-        result = decode(im)
-        if len(result) >= 1:
-            url = result[0].data.decode('utf-8')
-            param = url.split('?')[1]
-            params = param.split('&')
-            ticket = ''
-            for element in params:
-                if element.split('=')[0] == 'ticket':
-                    ticket = element.split('=')[1]
-                    break
-            # print(ticket)
-            if config['account_login']:
-                printLog('二维码识别成功，开始请求崩坏3服务器完成扫码')
-                await mihoyosdk.scanCheck(printLog,bh_info, ticket)
-            else:
-                if config['socket_send']:
-                    printLog('开始发送广播')
-                    send(printLog, url)
-                # printLog('local login mode')
 
-            time.sleep(1)
-            clear_clipboard()
-        else:
-            printLog('非登陆码,跳过')
+    if config['account_login']:
+
+        im = ImageGrab.grabclipboard()
+        # print('getting img...')
+        # print(config)
+        if isinstance(im, Image.Image):
+            printLog('识别到图片,开始检测是否为崩坏3登陆码')
+            result = decode(im)
+            if len(result) >= 1:
+                url = result[0].data.decode('utf-8')
+                param = url.split('?')[1]
+                params = param.split('&')
+                ticket = ''
+                for element in params:
+                    if element.split('=')[0] == 'ticket':
+                        ticket = element.split('=')[1]
+                        break
+                # print(ticket)
+                if config['account_login']:
+                    printLog('二维码识别成功，开始请求崩坏3服务器完成扫码')
+                    await mihoyosdk.scanCheck(printLog, bh_info, ticket)
+                else:
+                    if config['socket_send']:
+                        printLog('开始发送广播')
+                        send(printLog, url)
+                    # printLog('local login mode')
+
+                time.sleep(1)
+                clear_clipboard()
+            else:
+                printLog('非登陆码,跳过')
+    else:
+        printLog('当前未登录或登陆中，跳过当前图片处理')
 
 
 def clear_clipboard():
@@ -208,7 +229,7 @@ class SelfMainWindow(QMainWindow):
         if config['account_login']:
             ui.logText.append("账号已登录")
             ui.loginBiliBtn.setText("账号已登录")
-            ui.loginBiliBtn.setDisabled(True)
+            # ui.loginBiliBtn.setDisabled(True)
         ui.logText.append("开始登陆账号")
         # self.loginBiliBtn.setText("test")
         # asyncio.run(main())
