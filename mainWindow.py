@@ -69,7 +69,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "崩坏3外置扫码器"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "崩坏3外置扫码器 v.1.3.1"))
         self.label.setText(_translate("MainWindow", "登录B站账户"))
         self.loginBiliBtn.setText(_translate("MainWindow", "点击登录"))
         self.label_2.setText(_translate("MainWindow", "监听二维码"))

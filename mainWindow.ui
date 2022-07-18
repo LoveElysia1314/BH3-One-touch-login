@@ -24,7 +24,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>崩坏3外置扫码器</string>
+   <string>崩坏3外置扫码器 v.1.3.1</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QWidget" name="verticalLayoutWidget">

@@ -2,21 +2,21 @@ import hashlib
 import json
 import time
 import urllib
-
-from requests import post
+import requests
 
 import rsacr
 
 bililogin = "https://line1-sdk-center-login-sh.biligame.net/"
-
 
 async def sendPost(url, data):
     header = {
         "User-Agent": "Mozilla/5.0 BSGameSDK",
         "Content-Type": "application/x-www-form-urlencoded",
         "Host": "line1-sdk-center-login-sh.biligame.net"
-    }
-    res = post(url=url, data=data, headers=header)
+    }    
+    session = requests.Session()
+    session.trust_env = False
+    res = session.post(url=url, data=data, headers=header)
     # print(res)
     return res.json()
 

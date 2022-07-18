@@ -3,9 +3,10 @@ import hashlib
 import hmac
 import json
 import time
+import requests
 from typing import NoReturn
 
-from requests import post, get
+
 
 url = 'https://api-sdk.mihoyo.com/bh3_cn/combo/granter/login/v2/login'
 verifyBody = '{"device":"0000000000000000","app_id":"1","channel_id":"14","data":{},"sign":""}'
@@ -23,13 +24,17 @@ has_dispatch = False
 has_bh_ver = False
 
 async def sendPost(target, data, noReturn = False):
-    res = post(url=target, data=data)
+    session = requests.Session()
+    session.trust_env = False
+    res = session.post(url=target, data=data)
     if noReturn:
         return
     return res.json()
 
 async def sendGet(target):
-    res = get(url=target)
+    session = requests.Session()
+    session.trust_env = False
+    res = session.get(url=target)
     return res.json()
 
 def bh3Sign(data):
