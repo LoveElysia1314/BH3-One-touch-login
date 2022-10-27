@@ -5,6 +5,9 @@ import os.path
 import socket
 import sys
 import time
+import requests
+from tkinter import Tk
+from tkwebview2.tkwebview2 import WebView2, have_runtime, install_runtime
 
 import psutil
 from PIL import Image, ImageGrab
@@ -12,10 +15,10 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from pyzbar.pyzbar import decode
 
-import bsgamesdk
+# import bsgamesdk
 import mainWindow
 import loginDialog
-import mihoyosdk
+# import mihoyosdk
 
 # 组播组IP和端口
 m_cast_group_ip = '239.0.1.255'
@@ -23,7 +26,7 @@ m_cast_group_port = 12585
 bh_info = {}
 config = {}
 data = {}
-
+global ui
 
 def init_conf():
     # 配置文件检查
@@ -76,8 +79,9 @@ class LoginThread(QThread):
 
     async def login(self):
         global config, bh_info
-        ui.loginBiliBtn.setText('登陆中...')
+        # ui.loginBiliBtn.setText('登陆中...')
         self.printLog(f'登录B站账号{config["account"]}中...')
+        import bsgamesdk
         bs_info = await bsgamesdk.login(config['account'], config['password'])
         if "access_key" not in bs_info:
             self.printLog('登录失败！')
@@ -87,6 +91,7 @@ class LoginThread(QThread):
             return
         self.printLog('登录成功！')
         self.printLog('登录崩坏3账号中...')
+        import mihoyosdk
         bh_info = await mihoyosdk.verify(bs_info['uid'], bs_info['access_key'])
         if bh_info['retcode'] != 0:
             self.printLog('登录失败！')
@@ -160,6 +165,7 @@ async def parse_pic(printLog):
                 # print(ticket)
                 if config['account_login']:
                     printLog('二维码识别成功，开始请求崩坏3服务器完成扫码')
+                    import mihoyosdk
                     await mihoyosdk.scanCheck(printLog, bh_info, ticket)
                 else:
                     if config['socket_send']:
@@ -214,6 +220,9 @@ def deal_account(string):
     global config
     config['account'] = string
 
+def printLog(msg):
+    ui.logText.append(msg)
+
 
 class SelfMainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -221,7 +230,8 @@ class SelfMainWindow(QMainWindow):
 
     @staticmethod
     def printLog(msg):
-        ui.logText.append(msg)
+        print(msg)
+        # ui.logText.append(msg)
 
     @staticmethod
     def login():
@@ -265,8 +275,17 @@ class SelfMainWindow(QMainWindow):
         write_conf(config)
 
 
+def on_loaded():
+    print(webview.windows[0].load_url)
+
+
 if __name__ == '__main__':
     init_conf()
+
+    # 预初始化b服验证码
+    if not have_runtime():#没有webview2 runtime
+        install_runtime()
+
     app = QApplication(sys.argv)
     window = SelfMainWindow()
     ui = mainWindow.Ui_MainWindow()
@@ -293,8 +312,72 @@ if __name__ == '__main__':
     ui.backendClipCheck = ParseThread()
     ui.backendClipCheck.update_log.connect(window.printLog)
     ui.backendClipCheck.start()
-    window.show()
 
+
+    # window = webview.create_window('Hello world', 'https://github.com/cssxsh/mirai-hibernate-plugin/issues/12', frameless=True)
+    
+    # webview.start()
     sys.exit(app.exec_())
+    window.events.loaded += on_loaded
+
+
+async def sendPost(target, data, noReturn = False):
+    session = requests.Session()
+    session.trust_env = False
+    res = session.post(url=target, data=data)
+    if noReturn:
+        return
+    if res is None:
+        printLog(res)
+        printLog("请求错误，正在重试...")
+        return sendPost(target,data,noReturn)
+    return res.json()
+
+async def sendGet(target):
+    session = requests.Session()
+    session.trust_env = False
+    res = session.get(url=target)    
+    if res is None:
+        printLog(res)
+        printLog("请求错误，正在重试...")
+        return sendGet(target)
+    return res.json()
+
+async def sendBiliPost(url, data):
+    header = {
+        "User-Agent": "Mozilla/5.0 BSGameSDK",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Host": "line1-sdk-center-login-sh.biligame.net"
+    }    
+    session = requests.Session()
+    session.trust_env = False
+    try:
+        res = session.post(url=url, data=data, headers=header)
+    except:
+        
+        printLog("请求错误，3s后重试...")
+        time.sleep(3)
+        return sendBiliPost(url,data)
+    if res is None:
+        printLog(res)
+        printLog("请求错误，正在重试...")
+        return sendBiliPost(url,data)
+    # print(res)
+    return res.json()
+
+
+def make_captch(gt,challenge,gt_user):
+    capurl=f"https://game.bilibili.com/sdk/geetest/?captcha_type=1&challenge={challenge}&gt={gt}&userid={gt_user}&gs=1"
+
+    root=Tk()
+    root.title('pywebview for tkinter test')
+    root.geometry('1200x600+5+5')
+
+    frame=WebView2(root,500,500)
+    frame.pack(side='left')
+    frame.load_url(capurl)
+    # webview.windows[0].load_url(capurl)
+
+    
 
 # package cmd --> pyinstaller --clean -Fw main.py --collect-all pyzbar ### 请用32位环境打包 ###

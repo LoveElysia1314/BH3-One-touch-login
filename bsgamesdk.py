@@ -1,25 +1,12 @@
+from ast import Not
 import hashlib
 import json
 import time
 import urllib
-import requests
-
+from main import sendBiliPost,make_captch
 import rsacr
 
 bililogin = "https://line1-sdk-center-login-sh.biligame.net/"
-
-async def sendPost(url, data):
-    header = {
-        "User-Agent": "Mozilla/5.0 BSGameSDK",
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Host": "line1-sdk-center-login-sh.biligame.net"
-    }    
-    session = requests.Session()
-    session.trust_env = False
-    res = session.post(url=url, data=data, headers=header)
-    # print(res)
-    return res.json()
-
 
 def setSign(data):
     data["timestamp"] = int(time.time())
@@ -75,7 +62,7 @@ captchaParam = '{"operators":"5","merchant_id":"590","isRoot":"0","domain_switch
 async def login1(account, password):
     data = json.loads(rsaParam)
     data = setSign(data)
-    rsa = await sendPost(bililogin + "api/client/rsa", data)
+    rsa = await sendBiliPost(bililogin + "api/client/rsa", data)
     data = json.loads(loginParam)
     public_key = rsa['rsa_key']
     data["access_key"] = ""
@@ -86,13 +73,13 @@ async def login1(account, password):
     data["validate"] = ""
     data["pwd"] = rsacr.rsacreate(rsa['hash'] + password, public_key)
     data = setSign(data)
-    return await sendPost(bililogin + "api/client/login", data)
+    return await sendBiliPost(bililogin + "api/client/login", data)
 
 
 async def login2(account, password, challenge, gt_user, validate):
     data = json.loads(rsaParam)
     data = setSign(data)
-    rsa = await sendPost(bililogin + "api/client/rsa", data)
+    rsa = await sendBiliPost(bililogin + "api/client/rsa", data)
     data = json.loads(loginParam)
     public_key = rsa['rsa_key']
     data["access_key"] = ""
@@ -104,21 +91,50 @@ async def login2(account, password, challenge, gt_user, validate):
     data["seccode"] = validate + "|jordan"
     data["pwd"] = rsacr.rsacreate(rsa['hash'] + password, public_key)
     data = setSign(data)
-    return await sendPost(bililogin + "api/client/login", data)
+    return await sendBiliPost(bililogin + "api/client/login", data)
 
 
 async def captcha():
     data = json.loads(captchaParam)
     data = setSign(data)
-    return await sendPost(bililogin + "api/client/start_captcha", data)
+    return await sendBiliPost(bililogin + "api/client/start_captcha", data)
 
 
-async def login(bili_account, bili_pwd):
-    print(f'logging in with acc={bili_account}')
-    login_sta = await login1(bili_account, bili_pwd)
-    if "access_key" not in login_sta:
-        print('登录失败，可能需要验证码，请联系开发者补充代码')
-        print(login_sta)
+
+# def make_captch(gt,challenge,gt_user):
+#     capurl=f"https://game.bilibili.com/sdk/geetest/?captcha_type=1&challenge={challenge}&gt={gt}&userid={gt_user}&gs=1"
+#     window = webview.create_window('Hello world', capurl, frameless=True)
+#     window.events.loaded += on_loaded
+#     webview.start()
+
+    # data={}
+    # data['username']=""
+    # data['appkey']=""
+    # data['gt']=gt
+    # data['challenge']=challenge
+    # capurl=f"https://game.bilibili.com/sdk/geetest/?captcha_type=1&challenge={challenge}&gt={gt}&userid={gt_user}&gs=1"
+    # print(capurl)
+    # data['referer']=urllib.parse.quote(capurl)
+    # data['handle_method']="three_on"
+    # print(data)
+    # res = await sendBiliPost(.get(url="http://api.ydaaa.com/start_handle",params=data)
+    # return res
+
+
+async def login(bili_account, bili_pwd,captch_done=None):
+    if captch_done is not None:
+        login_sta=await login2(bili_account,bili_pwd,captcha_data["challenge"],captcha_data['gt_user_id'],captch_done)
+         
+    else:
+        print(f'logging in with acc={bili_account}')
+        login_sta = await login1(bili_account, bili_pwd)
+        if "access_key" not in login_sta:
+            captcha_data = await captcha()
+            captch_done = make_captch(captcha_data['gt'],captcha_data['challenge'],captcha_data['gt_user_id'])
+            # login_sta=await login2(bili_account,bili_pwd,captcha_data["challenge"],captcha_data['gt_user_id'],captch_done)
+            print(captcha_data)
+            print('登录失败，可能需要验证码，请联系开发者补充代码')
+            print(login_sta)
     return login_sta
 
 

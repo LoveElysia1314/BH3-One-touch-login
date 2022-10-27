@@ -3,8 +3,7 @@ import hashlib
 import hmac
 import json
 import time
-import requests
-from typing import NoReturn
+from main import sendGet, sendPost
 
 
 
@@ -22,20 +21,6 @@ local_dispatch = json.loads('{}')
 local_bh_ver = '5.8.0'
 has_dispatch = False
 has_bh_ver = False
-
-async def sendPost(target, data, noReturn = False):
-    session = requests.Session()
-    session.trust_env = False
-    res = session.post(url=target, data=data)
-    if noReturn:
-        return
-    return res.json()
-
-async def sendGet(target):
-    session = requests.Session()
-    session.trust_env = False
-    res = session.get(url=target)
-    return res.json()
 
 def bh3Sign(data):
     # print("data:"+data)
