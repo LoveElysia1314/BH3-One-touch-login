@@ -27,7 +27,7 @@ bh_info = {}
 config = {}
 data = {}
 cap = None
-global ui
+global ui,window
 
 def init_conf():
     # 配置文件检查
@@ -127,7 +127,8 @@ class LoginThread(QThread):
 
     def printLog(self, msg):
         print(str(msg))
-        self.update_log.emit(str(msg))
+        ui.logText.append(str(msg))
+        # self.update_log.emit(str(msg))
 
 
 class ParseThread(QThread):
@@ -236,7 +237,7 @@ class SelfMainWindow(QMainWindow):
     @staticmethod
     def printLog(msg):
         print(msg)
-        # ui.logText.append(msg)
+        ui.logText.append(msg)
 
     @staticmethod
     def login():
@@ -279,9 +280,6 @@ class SelfMainWindow(QMainWindow):
         config['socket_send'] = boolean
         write_conf(config)
 
-
-def on_loaded():
-    print(webview.windows[0].load_url)
 
 
 if __name__ == '__main__':

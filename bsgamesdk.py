@@ -111,6 +111,8 @@ async def login(bili_account, bili_pwd,cap=None):
     else:
         login_sta = await login1(bili_account, bili_pwd)
         if "access_key" not in login_sta:
+            cap_data = await captcha()
+            login_sta['cap_url'] = make_captch(cap_data['gt'],cap_data['challenge'],cap_data['gt_user_id'])
             print('登录失败，可能需要验证码，请联系开发者补充代码')
             print(login_sta)
     return login_sta
