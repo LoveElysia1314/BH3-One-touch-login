@@ -391,4 +391,4 @@ async def sendBiliPost(url, data):
 
     
 
-# package cmd --> pyinstaller --clean -Fw main.py --collect-all pyzbar ### 请用32位环境打包 ###
+# package cmd --> pyinstaller --clean -Fw main.py --collect-all pyzbar --add-data="templates;templates" ### 请用32位环境打包 ###
