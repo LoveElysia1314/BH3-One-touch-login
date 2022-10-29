@@ -1,9 +1,8 @@
-from ast import Not
 import hashlib
 import json
 import time
 import urllib
-from main import sendBiliPost,make_captch
+from main import sendBiliPost
 import rsacr
 
 bililogin = "https://line1-sdk-center-login-sh.biligame.net/"
@@ -99,40 +98,19 @@ async def captcha():
     data = setSign(data)
     return await sendBiliPost(bililogin + "api/client/start_captcha", data)
 
+def make_captch(gt,challenge,gt_user):
+    capurl=f"http://127.0.0.1:12983/?captcha_type=1&challenge={challenge}&gt={gt}&userid={gt_user}&gs=1"
+    print(capurl)
+    return capurl
 
-
-# def make_captch(gt,challenge,gt_user):
-#     capurl=f"https://game.bilibili.com/sdk/geetest/?captcha_type=1&challenge={challenge}&gt={gt}&userid={gt_user}&gs=1"
-#     window = webview.create_window('Hello world', capurl, frameless=True)
-#     window.events.loaded += on_loaded
-#     webview.start()
-
-    # data={}
-    # data['username']=""
-    # data['appkey']=""
-    # data['gt']=gt
-    # data['challenge']=challenge
-    # capurl=f"https://game.bilibili.com/sdk/geetest/?captcha_type=1&challenge={challenge}&gt={gt}&userid={gt_user}&gs=1"
-    # print(capurl)
-    # data['referer']=urllib.parse.quote(capurl)
-    # data['handle_method']="three_on"
-    # print(data)
-    # res = await sendBiliPost(.get(url="http://api.ydaaa.com/start_handle",params=data)
-    # return res
-
-
-async def login(bili_account, bili_pwd,captch_done=None):
-    if captch_done is not None:
-        login_sta=await login2(bili_account,bili_pwd,captcha_data["challenge"],captcha_data['gt_user_id'],captch_done)
-         
+async def login(bili_account, bili_pwd,cap=None):
+    print(f'logging in with acc={bili_account}')
+    print(cap)
+    if cap is not None:
+        login_sta = await login2(bili_account,bili_pwd,cap['challenge'],cap['userid'],cap['validate'])
     else:
-        print(f'logging in with acc={bili_account}')
         login_sta = await login1(bili_account, bili_pwd)
         if "access_key" not in login_sta:
-            captcha_data = await captcha()
-            captch_done = make_captch(captcha_data['gt'],captcha_data['challenge'],captcha_data['gt_user_id'])
-            # login_sta=await login2(bili_account,bili_pwd,captcha_data["challenge"],captcha_data['gt_user_id'],captch_done)
-            print(captcha_data)
             print('登录失败，可能需要验证码，请联系开发者补充代码')
             print(login_sta)
     return login_sta

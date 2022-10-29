@@ -5,9 +5,9 @@ import os.path
 import socket
 import sys
 import time
+from flask import Flask, render_template, abort, request
+from threading import Thread
 import requests
-from tkinter import Tk
-from tkwebview2.tkwebview2 import WebView2, have_runtime, install_runtime
 
 import psutil
 from PIL import Image, ImageGrab
@@ -26,6 +26,7 @@ m_cast_group_port = 12585
 bh_info = {}
 config = {}
 data = {}
+cap = None
 global ui
 
 def init_conf():
@@ -82,10 +83,14 @@ class LoginThread(QThread):
         # ui.loginBiliBtn.setText('登陆中...')
         self.printLog(f'登录B站账号{config["account"]}中...')
         import bsgamesdk
-        bs_info = await bsgamesdk.login(config['account'], config['password'])
+        bs_info = await bsgamesdk.login(config['account'], config['password'],cap)
         if "access_key" not in bs_info:
-            self.printLog('登录失败！')
-            self.printLog(bs_info)
+            if 'need_captch' in bs_info:
+                self.printLog('需要验证码！请打开下方网址进行操作！')
+                self.printLog(bs_info['cap_url'])
+            else:
+                self.printLog('登录失败！')
+                self.printLog(bs_info)
             ui.loginBiliBtn.setText("登陆账号")
             ui.loginBiliBtn.setDisabled(False)
             return
@@ -282,10 +287,6 @@ def on_loaded():
 if __name__ == '__main__':
     init_conf()
 
-    # 预初始化b服验证码
-    if not have_runtime():#没有webview2 runtime
-        install_runtime()
-
     app = QApplication(sys.argv)
     window = SelfMainWindow()
     ui = mainWindow.Ui_MainWindow()
@@ -312,13 +313,36 @@ if __name__ == '__main__':
     ui.backendClipCheck = ParseThread()
     ui.backendClipCheck.update_log.connect(window.printLog)
     ui.backendClipCheck.start()
-
-
-    # window = webview.create_window('Hello world', 'https://github.com/cssxsh/mirai-hibernate-plugin/issues/12', frameless=True)
+    window.show()
     
-    # webview.start()
+
+    fapp = Flask(__name__)
+        
+    @fapp.route("/")
+    def index():
+        return render_template("geetest.html")
+
+    @fapp.route('/ret',methods=["GET","POST"])
+    def ret():
+        if not request.json:
+            print(request)
+            abort(400)
+        print('Input = ' + str(request.json))
+        global cap
+        cap = request.json
+        ui.backendLogin = LoginThread()
+        ui.backendLogin.update_log.connect(window.printLog)
+        ui.backendLogin.start()
+        return "1"
+
+    kwargs = {'host': '0.0.0.0', 'port': 12983, 'threaded': True, 'use_reloader': False, 'debug': False}
+ 
+#   running flask thread
+    flaskThread = Thread(target=fapp.run, daemon=True, kwargs=kwargs).start()
+
+
+
     sys.exit(app.exec_())
-    window.events.loaded += on_loaded
 
 
 async def sendPost(target, data, noReturn = False):
@@ -364,19 +388,6 @@ async def sendBiliPost(url, data):
         return sendBiliPost(url,data)
     # print(res)
     return res.json()
-
-
-def make_captch(gt,challenge,gt_user):
-    capurl=f"https://game.bilibili.com/sdk/geetest/?captcha_type=1&challenge={challenge}&gt={gt}&userid={gt_user}&gs=1"
-
-    root=Tk()
-    root.title('pywebview for tkinter test')
-    root.geometry('1200x600+5+5')
-
-    frame=WebView2(root,500,500)
-    frame.pack(side='left')
-    frame.load_url(capurl)
-    # webview.windows[0].load_url(capurl)
 
     
 
