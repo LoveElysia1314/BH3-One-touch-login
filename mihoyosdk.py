@@ -1,4 +1,3 @@
-from glob import glob
 import hashlib
 import hmac
 import json
@@ -44,12 +43,12 @@ def makeSign(data):
     return data
 
 
-async def getBHVer():
+async def getBHVer(cache_bh_ver=None):
     global has_bh_ver,local_bh_ver
 
     if has_bh_ver:
         return local_bh_ver
-    feedback = await sendGet('https://api.scanner.hellocraft.xyz/update')
+    feedback = await sendGet('https://api.scanner.hellocraft.xyz/update',cache_bh_ver)
     # printLog('云端版本号')
     local_bh_ver = feedback['bh_ver']
     has_bh_ver = True

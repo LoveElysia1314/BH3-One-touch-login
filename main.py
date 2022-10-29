@@ -41,7 +41,7 @@ def init_conf():
             with open('./config.json') as fp:
                 config = json.loads(fp.read())
                 try:
-                    if config['ver'] != 3:
+                    if config['ver'] != 4:
                         print('配置文件已更新，请注意重新修改文件')
                         write_conf(config)
                         continue
@@ -59,15 +59,15 @@ def init_conf():
 
 
 def write_conf(old=None):
-    config_temp = json.loads('{"account":"","password":"","sleep_time":3,"ver":3,"clip_check":false,'
-                             '"socket_send":false}')
+    config_temp = json.loads('{"account":"","password":"","sleep_time":3,"ver":4,"clip_check":false,'
+                             '"socket_send":false,"uid":0,"access_key":"","last_login_succ":false,"bh_ver":"6.1.0","uname":""}')
     if old is not None:
         for key in config_temp:
             try:
                 config_temp[key] = old[key]
             except KeyError:
                 continue
-    config_temp['ver'] = 3
+    config_temp['ver'] = 4
     with open('./config.json', 'w') as f:
         output = json.dumps(config_temp, sort_keys=True, indent=4, separators=(',', ': '))
         f.write(output)
@@ -82,21 +82,68 @@ class LoginThread(QThread):
     async def login(self):
         global config, bh_info
         # ui.loginBiliBtn.setText('登陆中...')
-        self.printLog(f'登录B站账号{config["account"]}中...')
         import bsgamesdk
-        bs_info = await bsgamesdk.login(config['account'], config['password'],cap)
-        if "access_key" not in bs_info:
-            if 'need_captch' in bs_info:
-                self.printLog('需要验证码！请打开下方网址进行操作！')
-                self.printLog(bs_info['cap_url'])
-                webbrowser.open_new(bs_info['cap_url'])
+        if config['last_login_succ']:
+            self.printLog(f'验证缓存账号 {config["uname"]} 中...')
+            bs_user_info = await bsgamesdk.getUserInfo(config['uid'], config['access_key'])
+            if 'uname' in bs_user_info:
+                self.printLog(f'登录B站账号 {bs_user_info["uname"]} 成功！')
+                bs_info = {}
+                bs_info['uid'] = config['uid']
+                bs_info['access_key'] = config['access_key']
             else:
-                self.printLog('登录失败！')
-                self.printLog(bs_info)
-            ui.loginBiliBtn.setText("登陆账号")
-            ui.loginBiliBtn.setDisabled(False)
-            return
-        self.printLog('登录成功！')
+                config['last_login_succ'] = False
+                config['uid'] = 0
+                config['access_key'] = ""
+                config['uname'] = ""
+                write_conf(config)
+                self.printLog(f'缓存已失效，重新登录B站账号 {config["account"]} 中...')
+                bs_info = await bsgamesdk.login(config['account'], config['password'],cap)
+                if "access_key" not in bs_info:
+                    if 'need_captch' in bs_info:
+                        self.printLog('需要验证码！请打开下方网址进行操作！')
+                        self.printLog(bs_info['cap_url'])
+                        webbrowser.open_new(bs_info['cap_url'])
+                    else:
+                        self.printLog('登录失败！')
+                        self.printLog(bs_info)
+                    ui.loginBiliBtn.setText("登陆账号")
+                    ui.loginBiliBtn.setDisabled(False)
+                    return
+                bs_user_info = await bsgamesdk.getUserInfo(bs_info['uid'], bs_info['access_key'])
+
+                self.printLog(f'登录B站账号 {bs_user_info["uname"]} 成功！')
+                config['uid'] = bs_info['uid']
+                config['access_key'] = bs_info['access_key']
+                config['last_login_succ'] = True
+                config['uname'] = bs_user_info["uname"]
+
+                write_conf(config)
+        else:
+            self.printLog(f'登录B站账号 {config["account"]} 中...')
+            import bsgamesdk
+            bs_info = await bsgamesdk.login(config['account'], config['password'],cap)
+            if "access_key" not in bs_info:
+                if 'need_captch' in bs_info:
+                    self.printLog('需要验证码！请打开下方网址进行操作！')
+                    self.printLog(bs_info['cap_url'])
+                    webbrowser.open_new(bs_info['cap_url'])
+                else:
+                    self.printLog('登录失败！')
+                    self.printLog(bs_info)
+                ui.loginBiliBtn.setText("登陆账号")
+                ui.loginBiliBtn.setDisabled(False)
+                return
+            bs_user_info = await bsgamesdk.getUserInfo(bs_info['uid'], bs_info['access_key'])
+
+            self.printLog(f'登录B站账号 {bs_user_info["uname"]} 成功！')
+            config['uid'] = bs_info['uid']
+            config['access_key'] = bs_info['access_key']
+            config['last_login_succ'] = True
+            config['uname'] = bs_user_info["uname"]
+
+            write_conf(config)
+
         self.printLog('登录崩坏3账号中...')
         import mihoyosdk
         bh_info = await mihoyosdk.verify(bs_info['uid'], bs_info['access_key'])
@@ -108,15 +155,17 @@ class LoginThread(QThread):
         
         self.printLog('获取OA服务器信息中...')
 
+        bh_ver = await mihoyosdk.getBHVer(config)
 
-        bh_ver = await mihoyosdk.getBHVer()
+        config['bh_ver'] = bh_ver
 
+        write_conf(config)
 
         self.printLog(f'当前崩坏3版本: {bh_ver}')
 
         oa = await mihoyosdk.getOAServer()
         if oa['retcode'] != 0:
-            self.printLog('登录失败！')
+            self.printLog('获取OA服务器失败！')
             self.printLog(oa)
             return
 
@@ -229,7 +278,10 @@ def deal_account(string):
     config['account'] = string
 
 def printLog(msg):
-    ui.logText.append(msg)
+    try:
+        ui.logText.append(str(msg))
+    except:
+        print(str(msg))
 
 
 class SelfMainWindow(QMainWindow):
@@ -320,6 +372,10 @@ if __name__ == '__main__':
         
     @fapp.route("/")
     def index():
+        return render_template("index.html")    
+
+    @fapp.route("/geetest")
+    def geetest():
         return render_template("geetest.html")
 
     @fapp.route('/ret',methods=["GET","POST"])
@@ -357,14 +413,17 @@ async def sendPost(target, data, noReturn = False):
         return sendPost(target,data,noReturn)
     return res.json()
 
-async def sendGet(target):
+async def sendGet(target, default_ret=None):
     session = requests.Session()
     session.trust_env = False
     res = session.get(url=target)    
     if res is None:
-        printLog(res)
-        printLog("请求错误，正在重试...")
-        return sendGet(target)
+        if default_ret is None:
+            printLog(res)
+            printLog("请求错误，正在重试...")
+            return sendGet(target)
+        else:
+            return default_ret
     return res.json()
 
 async def sendBiliPost(url, data):
@@ -386,7 +445,7 @@ async def sendBiliPost(url, data):
         printLog(res)
         printLog("请求错误，正在重试...")
         return sendBiliPost(url,data)
-    # print(res)
+    print(res.json())
     return res.json()
 
     

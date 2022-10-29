@@ -694,6 +694,10 @@ var _hmt = _hmt || [];
                 xmlhttp.send(JSON.stringify(data));
                 document.writeln("验证已完成，窗口将在5s后自动关闭")
                 setTimeout(() => {
+                    var data = {
+                        needClose: true
+                    }
+                    localStorage.setItem('scanner_data',JSON.stringify(data));
                     CloseWebPage();
                 }, 5000);
                 }
