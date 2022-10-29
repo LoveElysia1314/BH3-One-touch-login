@@ -8,6 +8,7 @@ import time
 from flask import Flask, render_template, abort, request
 from threading import Thread
 import requests
+import webbrowser
 
 import psutil
 from PIL import Image, ImageGrab
@@ -88,6 +89,7 @@ class LoginThread(QThread):
             if 'need_captch' in bs_info:
                 self.printLog('需要验证码！请打开下方网址进行操作！')
                 self.printLog(bs_info['cap_url'])
+                webbrowser.open_new(bs_info['cap_url'])
             else:
                 self.printLog('登录失败！')
                 self.printLog(bs_info)
