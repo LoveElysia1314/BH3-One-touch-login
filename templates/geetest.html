@@ -693,12 +693,20 @@ var _hmt = _hmt || [];
                 xmlhttp.setRequestHeader("Content-type", "application/json");  
                 xmlhttp.send(JSON.stringify(data));
                 document.writeln("验证已完成，窗口将在5s后自动关闭")
+                var data = {
+                        needClose: false,
+                        needCap: false,
+                }
+                localStorage.setItem('scanner_data',JSON.stringify(data));
                 setTimeout(() => {
-                    var data = {
-                        needClose: true
+                    if(localStorage.getItem('scanner_data') == null) return;
+                    var data = JSON.parse(localStorage.getItem('scanner_data'));
+                    if (!data.needCap) {
+                        data.needClose = true;
+                        localStorage.setItem('scanner_data',JSON.stringify(data));
+                        CloseWebPage();
                     }
-                    localStorage.setItem('scanner_data',JSON.stringify(data));
-                    CloseWebPage();
+                    
                 }, 5000);
                 }
             }

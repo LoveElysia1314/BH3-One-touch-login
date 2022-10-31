@@ -56,7 +56,8 @@
             }
             IEContentLoaded(window,function () {
                 var data = {
-                        needClose: false
+                        needClose: false,
+                        needCap: true,
                 }
                 localStorage.setItem('scanner_data',JSON.stringify(data));
                 console.log(window.location.href);
