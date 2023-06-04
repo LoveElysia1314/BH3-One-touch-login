@@ -339,35 +339,6 @@ class SelfMainWindow(QMainWindow):
 if __name__ == '__main__':
     init_conf()
 
-    app = QApplication(sys.argv)
-    window = SelfMainWindow()
-    ui = mainWindow.Ui_MainWindow()
-    ui.setupUi(window)
-    try:
-        if config['account'] != '':
-            ui.logText.append("配置文件已有账号，尝试登录中...")
-            ui.backendLogin = LoginThread()
-            ui.backendLogin.update_log.connect(window.printLog)
-            ui.backendLogin.start()
-        if config['clip_check']:
-            ui.clipCheck.setText("当前状态:启用")
-        else:
-            ui.clipCheck.setText("当前状态:关闭")
-        ui.clipCheck.setChecked(config['clip_check'])
-        if config['socket_send']:
-            ui.broadcastCheck.setText("当前状态:启用")
-        else:
-            ui.broadcastCheck.setText("当前状态:关闭")
-        ui.broadcastCheck.setChecked(config['socket_send'])
-    except KeyError:
-        write_conf(config)
-        print("配置文件异常，重置并跳过登录")
-    ui.backendClipCheck = ParseThread()
-    ui.backendClipCheck.update_log.connect(window.printLog)
-    ui.backendClipCheck.start()
-    window.show()
-    
-
     fapp = Flask(__name__)
         
     @fapp.route("/")
@@ -396,8 +367,34 @@ if __name__ == '__main__':
 #   running flask thread
     flaskThread = Thread(target=fapp.run, daemon=True, kwargs=kwargs).start()
 
-
-
+    app = QApplication(sys.argv)
+    window = SelfMainWindow()
+    ui = mainWindow.Ui_MainWindow()
+    ui.setupUi(window)
+    try:
+        if config['account'] != '':
+            ui.logText.append("配置文件已有账号，尝试登录中...")
+            ui.backendLogin = LoginThread()
+            ui.backendLogin.update_log.connect(window.printLog)
+            ui.backendLogin.start()
+        if config['clip_check']:
+            ui.clipCheck.setText("当前状态:启用")
+        else:
+            ui.clipCheck.setText("当前状态:关闭")
+        ui.clipCheck.setChecked(config['clip_check'])
+        if config['socket_send']:
+            ui.broadcastCheck.setText("当前状态:启用")
+        else:
+            ui.broadcastCheck.setText("当前状态:关闭")
+        ui.broadcastCheck.setChecked(config['socket_send'])
+    except KeyError:
+        write_conf(config)
+        print("配置文件异常，重置并跳过登录")
+    ui.backendClipCheck = ParseThread()
+    ui.backendClipCheck.update_log.connect(window.printLog)
+    ui.backendClipCheck.start()
+    window.show()
+    
     sys.exit(app.exec_())
 
 

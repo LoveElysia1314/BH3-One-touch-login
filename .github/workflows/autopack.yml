@@ -22,7 +22,7 @@ jobs:
           pip install pyinstaller
 
       - name: Package to exe
-        run: pyinstaller --clean -Fw main.py --collect-all pyzbar --add-data="templates;templates"
+        run: pyinstaller --clean -Fc main.py --collect-all pyzbar --add-data="templates;templates"
 
       - name: Upload output
         uses: actions/upload-artifact@v3
