@@ -62,16 +62,16 @@ async def getOAServer():
         return local_dispatch
 
     bh_ver = await getBHVer()
-    timestamp = int(time.time())
-    oa_main_url = 'https://global2.bh3.com/query_dispatch?'
-    param = f'version={bh_ver}_gf_android_bilibili&t={timestamp}'
-    feedback = await sendPost(oa_main_url + param, '')
+    # timestamp = int(time.time())
+    # oa_main_url = 'https://global2.bh3.com/query_dispatch?'
+    # param = f'version={bh_ver}_gf_android_bilibili&t={timestamp}'
+    # feedback = await sendPost(oa_main_url + param, '')
     # print(feedback)
     timestamp = int(time.time())
     param = f'?version={bh_ver}_gf_android_bilibili&t={timestamp}'
-    dispatch_url = feedback['region_list'][0]['dispatch_url'] + param
+    dispatch_url = 'https://dispatch.scanner.hellocraft.xyz/v2/query_dispatch/'+ param
     # print(dispatch_url)
-    dispatch = await sendPost(dispatch_url + param, '')
+    dispatch = await sendGet(dispatch_url)
 
     has_dispatch = True
 
@@ -100,7 +100,8 @@ async def scanConfirm(printLog, bhinfoR, ticket):
     # print(bhinfo)
     scan_result = json.loads(scanResultR)
     scan_data = json.loads(scanDataR)
-    scan_data['dispatch'] = await getOAServer()
+    dispatch = await getOAServer()
+    scan_data['dispatch'] = dispatch['data']
     scan_data['accountID'] = bhinfo['open_id']
     scan_data['accountToken'] = bhinfo['combo_token']
     scan_ext = json.loads(scanExtR)
