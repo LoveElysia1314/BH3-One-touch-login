@@ -30,10 +30,10 @@ jobs:
           name: helper-nocmd
           path: dist/main.exe
 
-      - name: Package to exe (whit CMD)
+      - name: Package to exe (with CMD)
         run: pyinstaller --clean -Fc main.py --collect-all pyzbar --add-data="templates;templates"
 
-      - name: Upload output
+      - name: Upload output (with CMD)
         uses: actions/upload-artifact@v3
         with:
           name: helper-cmd
