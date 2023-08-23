@@ -60,7 +60,7 @@ def init_conf():
 
 def write_conf(old=None):
     config_temp = json.loads('{"account":"","password":"","sleep_time":3,"ver":4,"clip_check":false,'
-                             '"socket_send":false,"uid":0,"access_key":"","last_login_succ":false,"bh_ver":"6.1.0","uname":""}')
+                             '"socket_send":false,"uid":0,"access_key":"","last_login_succ":false,"bh_ver":"6.9.0","uname":""}')
     if old is not None:
         for key in config_temp:
             try:

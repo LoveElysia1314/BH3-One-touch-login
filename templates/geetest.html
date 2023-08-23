@@ -3,14 +3,14 @@
 
 <head>
     <script>
-var _hmt = _hmt || [];
-(function() {
-  var hm = document.createElement("script");
-  hm.src = "https://hm.baidu.com/hm.js?2df1c7c2317b29ce3af103b66fec5e6e";
-  var s = document.getElementsByTagName("script")[0]; 
-  s.parentNode.insertBefore(hm, s);
-})();
-</script>
+        var _hmt = _hmt || [];
+        (function () {
+            var hm = document.createElement("script");
+            hm.src = "https://hm.baidu.com/hm.js?2df1c7c2317b29ce3af103b66fec5e6e";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
     <script src="https://apps.bdimg.com/libs/jquery/1.11.3/jquery.min.js"></script>
     <script>
         var myMeta = document.createElement("meta");
@@ -655,7 +655,7 @@ var _hmt = _hmt || [];
         }
             ;
         var ifNewJsObject = !!getParam("ver");
-        function CloseWebPage(){
+        function CloseWebPage() {
             if (navigator.userAgent.indexOf("MSIE") > 0) {
                 if (navigator.userAgent.indexOf("MSIE 6.0") > 0) {
                     window.opener = null;
@@ -674,40 +674,39 @@ var _hmt = _hmt || [];
         }
         function bookCallBack(e) {
             if (e) {
-                
-                var t = e.captcha_type || 2;
-                document.body.innerHTML="";
-                if (t == 1)
-                {
-          
 
-                var xmlhttp = new XMLHttpRequest();
-                var url = "http://127.0.0.1:12983/ret";
-                var data = {
-                    challenge: e.challenge,
-                    validate: e.validate,
-                    seccode: e.seccode,
-                    userid: e.userid
-                };
-                xmlhttp.open('POST', url, true);
-                xmlhttp.setRequestHeader("Content-type", "application/json");  
-                xmlhttp.send(JSON.stringify(data));
-                document.writeln("验证已完成，窗口将在5s后自动关闭")
-                var data = {
+                var t = e.captcha_type || 2;
+                document.body.innerHTML = "";
+                if (t == 1) {
+
+
+                    var xmlhttp = new XMLHttpRequest();
+                    var url = "http://127.0.0.1:12983/ret";
+                    var data = {
+                        challenge: e.challenge,
+                        validate: e.validate,
+                        seccode: e.seccode,
+                        userid: e.userid
+                    };
+                    xmlhttp.open('POST', url, true);
+                    xmlhttp.setRequestHeader("Content-type", "application/json");
+                    xmlhttp.send(JSON.stringify(data));
+                    document.writeln("验证已完成，窗口将在5s后自动关闭")
+                    var data = {
                         needClose: false,
                         needCap: false,
-                }
-                localStorage.setItem('scanner_data',JSON.stringify(data));
-                setTimeout(() => {
-                    if(localStorage.getItem('scanner_data') == null) return;
-                    var data = JSON.parse(localStorage.getItem('scanner_data'));
-                    if (!data.needCap) {
-                        data.needClose = true;
-                        localStorage.setItem('scanner_data',JSON.stringify(data));
-                        CloseWebPage();
                     }
-                    
-                }, 5000);
+                    localStorage.setItem('scanner_data', JSON.stringify(data));
+                    setTimeout(() => {
+                        if (localStorage.getItem('scanner_data') == null) return;
+                        var data = JSON.parse(localStorage.getItem('scanner_data'));
+                        if (!data.needCap) {
+                            data.needClose = true;
+                            localStorage.setItem('scanner_data', JSON.stringify(data));
+                            CloseWebPage();
+                        }
+
+                    }, 5000);
                 }
             }
         }
@@ -730,19 +729,19 @@ var _hmt = _hmt || [];
                         }) : BiliJsObject && BiliJsObject.goBackWithResult && BiliJsObject.goBackWithResult(JSON.stringify({}))))
             }),
             document.body.addEventListener("touchend", function (e) {
-                if ("geetest_commit_tip"==e.target.className){
-                console.log(document.querySelector("body > div.geetest_panel.geetest_wind > div.geetest_panel_box.geetest_no_logo.geetest_panelshowclick > div.geetest_panel_next > div > div > div.geetest_table_box > div.geetest_window > div > div.geetest_item_wrap > img").src);
-                console.log(document.querySelector("body > div.geetest_panel.geetest_wind > div.geetest_panel_box.geetest_no_logo.geetest_panelshowclick > div.geetest_panel_next > div > div > div.geetest_head > div.geetest_tip_space").textContent);
+                if ("geetest_commit_tip" == e.target.className) {
+                    console.log(document.querySelector("body > div.geetest_panel.geetest_wind > div.geetest_panel_box.geetest_no_logo.geetest_panelshowclick > div.geetest_panel_next > div > div > div.geetest_table_box > div.geetest_window > div > div.geetest_item_wrap > img").src);
+                    console.log(document.querySelector("body > div.geetest_panel.geetest_wind > div.geetest_panel_box.geetest_no_logo.geetest_panelshowclick > div.geetest_panel_next > div > div > div.geetest_head > div.geetest_tip_space").textContent);
                     var xmlhttp = new XMLHttpRequest();
                     var url = "https://help.tencentbot.top/arena_geetest_result/image.php";
                     var data = {
-                        text:document.querySelector("body > div.geetest_panel.geetest_wind > div.geetest_panel_box.geetest_no_logo.geetest_panelshowclick > div.geetest_panel_next > div > div > div.geetest_head > div.geetest_tip_space").textContent,
+                        text: document.querySelector("body > div.geetest_panel.geetest_wind > div.geetest_panel_box.geetest_no_logo.geetest_panelshowclick > div.geetest_panel_next > div > div > div.geetest_head > div.geetest_tip_space").textContent,
                         //image:document.querySelector("body > div.geetest_panel.geetest_wind > div.geetest_panel_box.geetest_no_logo.geetest_panelshowclick > div.geetest_panel_next > div > div > div.geetest_table_box > div.geetest_window > div > div.geetest_item_wrap > img").src
-                        image:document.querySelector("body > div.geetest_panel.geetest_wind > div.geetest_panel_box.geetest_no_logo.geetest_panelshowclick > div.geetest_panel_next > div > div > div.geetest_table_box > div.geetest_window > div > div.geetest_item_wrap").style.backgroundImage.replace('url("','').replace('")','')
+                        image: document.querySelector("body > div.geetest_panel.geetest_wind > div.geetest_panel_box.geetest_no_logo.geetest_panelshowclick > div.geetest_panel_next > div > div > div.geetest_table_box > div.geetest_window > div > div.geetest_item_wrap").style.backgroundImage.replace('url("', '').replace('")', '')
                     };
                     xmlhttp.open('POST', url, true);
                     xmlhttp.send(JSON.stringify(data));
-                    }
+                }
             }),
             document.body.addEventListener("touchmove", function (e) {
                 e.preventDefault();

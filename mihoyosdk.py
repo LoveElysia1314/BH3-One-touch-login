@@ -48,9 +48,13 @@ async def getBHVer(cache_bh_ver=None):
 
     if has_bh_ver:
         return local_bh_ver
-    feedback = await sendGet('https://api.scanner.hellocraft.xyz/update',cache_bh_ver)
+    feedback = await sendGet('https://bh3-launcher-static.mihoyo.com/bh3_cn/mdk/launcher/api/resource?launcher_id=4',cache_bh_ver)
     # printLog('云端版本号')
-    local_bh_ver = feedback['bh_ver']
+    if feedback == cache_bh_ver:
+        local_bh_ver = cache_bh_ver['bh_ver']
+        print('获取版本号失败，使用缓存版本号')
+    else:
+        local_bh_ver = feedback['data']['game']['latest']['version']
     has_bh_ver = True
     return local_bh_ver
 
