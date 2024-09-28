@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
+import pygetwindow as gw
 import BH3MatchPicture as BMP
-import elevate
 from tkinter import ttk
 import tkinter as tk
 import psutil
@@ -70,7 +70,7 @@ def match_and_click():
 
 
 def detect_and_handle_qr_code():
-    qr_code_data = BMP.detect_qr_code()
+    qr_code_data = BMP.detect_qr_code(BMP.capture_screenshot())
     if qr_code_data:
         capture_screen()
         print(f"Detected QR code with data: {qr_code_data}")
@@ -94,8 +94,18 @@ def create_gui(root, ruler):
     return label
 
 
+def check_window(name="崩坏3"):
+    # 获取所有的窗口
+    windows = gw.getAllWindows()
+
+    # 查找是否有对应的窗口
+    for window in windows:
+        if window.title == name:
+            return True
+
+
 def auto_scan(root, label, ruler, had_scan=0):
-    if match_and_click():
+    if match_and_click() and check_window("崩坏3"):
         if had_scan:
             if kill_process("[仅B服]PC扫码器"):
                 root.after(2000, root.destroy)
@@ -107,7 +117,6 @@ def auto_scan(root, label, ruler, had_scan=0):
 
 
 def main():
-    elevate.elevate()
     setup_dpi_awareness()
     path_dict = load_json()
 
