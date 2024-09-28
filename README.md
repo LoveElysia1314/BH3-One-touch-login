@@ -1,6 +1,7 @@
 注意：不要将本程序置于含中文的文件路径中。
+实现一键登录的程序是.\BH3lunch\BH3_Bilibili.py
 操作顺序
-首次使用：
+首次使用BH3_Bilibili.py：
 0.安装需要的所有库
 1.需要有PC端崩坏三扫码器(即本项目的main.py，或编译好的exe文件，下载链接：https://haocen.lanzoum.com/b01ovffcj，密码193x，感谢github用户@Haocen2004)
 2.打开扫码器并登录
